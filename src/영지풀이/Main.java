@@ -1,5 +1,5 @@
 package 영지풀이;
-
+//빌드사이트 추가중 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -60,6 +60,7 @@ class Session {
 class Factory {
 	private static Session session;
 	private static DB db;
+	private static BuildService buildService;
 	private static ArticleService articleService;
 	private static ArticleDao articleDao;
 	private static MemberService memberService;
@@ -116,6 +117,14 @@ class Factory {
 		}
 		return memberDao;
 	}
+
+	public static BuildService getBuildService() {
+		if (buildService == null) {
+			buildService = new BuildService();
+		}
+
+		return buildService;
+	}
 }
 
 // App
@@ -126,6 +135,7 @@ class App {
 	// 나중에 컨트롤러 이름으로 쉽게 찾아쓸 수 있게 하려고 Map 사용
 	void initControllers() {
 		controllers = new HashMap<>();
+		controllers.put("build", new BuildController());
 		controllers.put("article", new ArticleController());
 		controllers.put("member", new MemberController());
 	}
@@ -138,7 +148,6 @@ class App {
 		Factory.getMemberService().join("admin", "admin", "관리자");
 		// 공지사항 게시판 생성
 		Factory.getArticleService().makeBoard("공지사항", "notice");
-//		Factory.getArticleService().makeBoard("자유게시판", "free");
 
 		// 현재 게시판을 1번 게시판으로 선택
 		Factory.getSession().setCurrentBoard(Factory.getArticleService().getBoard(1));
@@ -279,6 +288,75 @@ class ArticleController extends Controller {
 			actionDelete(reqeust);
 		} else if (reqeust.getActionName().equals("detail")) {
 			actionDetail(reqeust);
+		} else if (reqeust.getActionName().equals("listBoard")) {
+			actionListBoard(reqeust);
+		} else if (reqeust.getActionName().equals("changeBoard")) {
+			actionChangeBoard(reqeust);
+		} else {
+			if(Factory.getSession().getLoginedMember()!=null) {
+				if (Factory.getSession().getLoginedMember().getId() == 1) {
+					if (reqeust.getActionName().equals("createBoard")) {
+						actionCreateBoard(reqeust);
+					} else if (reqeust.getActionName().equals("deleteBoard")) {
+						actionDeleteBoard(reqeust);
+					}
+				} else {
+					System.out.println("관리자 권한이 필요합니다.");
+				}
+			}
+			else {
+				System.out.println("로그인 후 이용 가능합니다.");
+			}
+		}
+	}
+
+	private void actionChangeBoard(Request reqeust) {
+		String code = reqeust.getArg1();
+		if (code != null) {
+			// 해당 코드의 게시판이 존재하는지.
+			// 존재한다면 게시판 변경.
+			int boardId = articleService.isExistBoard(code);
+			if (boardId > 0) {
+				articleService.changeBoard(boardId);
+			} else {
+				System.out.println("게시판 변경 실패 사유 : 해당 코드 게시판 부재");
+			}
+		} else {
+			System.out.println("게시판 변경 실패 사유 : 코드 미입력");
+		}
+	}
+
+	private void actionListBoard(Request reqeust) {
+		articleService.listBoard();
+	}
+
+	private void actionDeleteBoard(Request reqeust) {
+		String deleteCode = reqeust.getArg1();
+		if (deleteCode == null) {
+			System.out.println("게시판 삭제 실패 사유 : 삭제할 게시판의 코드 미입력");
+		} else {
+			// 해당 코드의 게시판이 있는지
+			int boardId = articleService.isExistBoard(deleteCode);
+			if (boardId > 0) {
+				// 있다면 삭제하는 코드(삭제하는 게시판의 게시물들도 다 삭제)
+				articleService.deleteBoard(boardId);
+			} else {
+				System.out.println("해당 코드의 게시판은 존재하지 않습니다.");
+			}
+		}
+	}
+
+	private void actionCreateBoard(Request reqeust) {
+		System.out.println("생성할 게시판과 코드를 입력하세요.");
+		System.out.print("게시판 이름 : ");
+		String boardName = Factory.getScanner().nextLine().trim();
+		System.out.print("코드 : ");
+		String boardCode = Factory.getScanner().nextLine().trim();
+		// 동일한 이름 혹은 코드가 있는 게시판이 존재하지 않을 경우 실행하도록.
+		if (!articleService.findBoard(boardName, boardCode)) {
+			Factory.getArticleService().makeBoard(boardName, boardCode);
+		} else {
+			System.out.println("게시판 생성 실패 사유 : 동일한 이름/코드의 게시판이 존재");
 		}
 	}
 
@@ -293,8 +371,16 @@ class ArticleController extends Controller {
 
 	private void actionDelete(Request reqeust) {
 		if (Factory.getSession().getLoginedMember() != null) {
-			int deleteArticleNum = Integer.parseInt(reqeust.getArg1());
-			articleService.deleteArticle(deleteArticleNum);
+			int deleteArticleNum = -1;
+			try {
+				deleteArticleNum = Integer.parseInt(reqeust.getArg1());
+			} catch (Exception e) {
+			}
+			if (deleteArticleNum != -1) {
+				articleService.deleteArticle(deleteArticleNum);
+			} else {
+				System.out.println("게시물 삭제 실패 사유 : 번호 미입력");
+			}
 		} else {
 			System.out.println("게시글 삭제 / 비회원 접근 불가");
 		}
@@ -302,7 +388,11 @@ class ArticleController extends Controller {
 
 	private void actionModify(Request reqeust) {
 		if (Factory.getSession().getLoginedMember() != null) {
-			int number = Integer.parseInt(reqeust.getArg1());
+			int number = -1;
+			try {
+				number = Integer.parseInt(reqeust.getArg1());
+			} catch (Exception e) {
+			}
 			int result = articleService.isExistArticle(number);
 			if (result > 0) {
 				System.out.printf("제목 : ");
@@ -322,8 +412,21 @@ class ArticleController extends Controller {
 	}
 
 	private void actionList(Request reqeust) {
-		int listNum = Integer.parseInt(reqeust.getArg1());
-		articleService.listArticlePage(listNum);
+		int pageNum = 1;
+		// page 숫자를 입력하지 않았을 경우, 1p를 보여줌.
+		try {
+			pageNum = Integer.parseInt(reqeust.getArg1());
+		} catch (Exception e) {
+		}
+		String listSearchKeyword = "";
+		try {
+			if (reqeust.getArg2().trim().length() > 0) {
+				listSearchKeyword = reqeust.getArg2();
+			}
+		} catch (Exception e) {
+		}
+
+		articleService.listArticlePage(pageNum, listSearchKeyword);
 	}
 
 	private void actionWrite(Request reqeust) {
@@ -419,10 +522,93 @@ class MemberController extends Controller {
 			Factory.getSession().setLoginedMember(null);
 		}
 	}
+}
 
+class BuildController extends Controller {
+	private BuildService buildService;
+
+	BuildController() {
+		buildService = Factory.getBuildService();
+	}
+
+	@Override
+	void doAction(Request reqeust) {
+		if (reqeust.getActionName().equals("site")) {
+			actionSite(reqeust);
+		}
+	}
+
+	private void actionSite(Request reqeust) {
+		buildService.buildSite();
+	}
 }
 
 // Service
+class BuildService {
+	ArticleService articleService;
+
+	BuildService() {
+		articleService = Factory.getArticleService();
+	}
+
+	public void buildSite() {
+		Util.makeDir("site");
+		Util.makeDir("site/home");
+		Util.makeDir("site/article");
+
+		String head = Util.getFileContents("site_template/part/head.html");
+		String foot = Util.getFileContents("site_template/part/foot.html");
+
+		// 각 게시판 별 게시물리스트 페이지 생성
+		List<Board> boards = articleService.getBoards();
+
+		for (Board board : boards) {
+			String fileName = board.getCode() + "-list-1.html";
+
+			String html = "";
+
+			List<Article> articles = articleService.getArticlesByBoardCode(board.getCode());
+
+			String template = Util.getFileContents("site_template/article/list.html");
+
+			for (Article article : articles) {
+				html += "<tr>";
+				html += "<td>" + article.getId() + "</td>";
+				html += "<td>" + article.getRegDate() + "</td>";
+				html += "<td><a href=\"" + article.getId() + ".html\">" + article.getTitle() + "</a></td>";
+				html += "</tr>";
+			}
+
+			html = template.replace("${TR}", html);
+
+			html = head + html + foot;
+
+			Util.writeFileContents("site/article/" + fileName, html);
+		}
+
+		// 게시물 별 파일 생성
+		List<Article> articles = articleService.getArticles();
+
+		for (Article article : articles) {
+			String html = "";
+
+			html += "<div>제목 : " + article.getTitle() + "</div>";
+			html += "<div>내용 : " + article.getBody() + "</div>";
+			if(!articles.get(0).equals(article)) {
+				html += "<div><a href=\"" + (article.getId() - 1) + ".html\">이전글</a></div>";
+			}
+			if(!articles.get(articles.size()-1).equals(article)) {
+				html += "<div><a href=\"" + (article.getId() + 1) + ".html\">다음글</a></div>";
+			}
+
+			html = head + html + foot;
+
+			Util.writeFileContents("site/article/" + article.getId() + ".html", html);
+		}
+	}
+
+}
+
 class ArticleService {
 	private ArticleDao articleDao;
 
@@ -430,8 +616,36 @@ class ArticleService {
 		articleDao = Factory.getArticleDao();
 	}
 
-	public void listArticlePage(int num) {
-		articleDao.listArticlePage(num);
+	public List<Article> getArticlesByBoardCode(String code) {
+		return articleDao.getArticlesByBoardCode(code);
+	}
+
+	public List<Board> getBoards() {
+		return articleDao.getBoards();
+	}
+
+	public void changeBoard(int boardId) {
+		articleDao.changeBoard(boardId);
+	}
+
+	public void listBoard() {
+		articleDao.listBoard();
+	}
+
+	public void deleteBoard(int boardId) {
+		articleDao.deleteBoard(boardId);
+	}
+
+	public int isExistBoard(String deleteCode) {
+		return articleDao.isExistBoard(deleteCode);
+	}
+
+	public boolean findBoard(String boardName, String boardCode) {
+		return articleDao.findBoard(boardName, boardCode);
+	}
+
+	public void listArticlePage(int pageNum, String keyword) {
+		articleDao.listArticlePage(pageNum, keyword);
 	}
 
 	public void detailArticle(int num) {
@@ -518,8 +732,36 @@ class ArticleDao {
 		db = Factory.getDB();
 	}
 
-	public void listArticlePage(int num) {
-		db.listArticlePage(num);
+	public List<Article> getArticlesByBoardCode(String code) {
+		return db.getArticlesByBoardCode(code);
+	}
+
+	public List<Board> getBoards() {
+		return db.getBoards();
+	}
+
+	public void changeBoard(int boardId) {
+		db.changeBoard(boardId);
+	}
+
+	public void listBoard() {
+		db.listBoard();
+	}
+
+	public void deleteBoard(int boardId) {
+		db.deleteBoard(boardId);
+	}
+
+	public int isExistBoard(String deleteCode) {
+		return db.isExistBoard(deleteCode);
+	}
+
+	public boolean findBoard(String boardName, String boardCode) {
+		return db.findBoard(boardName, boardCode);
+	}
+
+	public void listArticlePage(int num, String keyword) {
+		db.listArticlePage(num, keyword);
 	}
 
 	public void detailArticle(int num) {
@@ -606,24 +848,121 @@ class DB {
 		tables.put("member", new Table<Member>(Member.class, dbDirPath));
 	}
 
-	public void listArticlePage(int num) {
-		List<Article> articlesByBoard = new ArrayList<>();
-		for (Article article : getArticles()) {
-			if (article.getBoardId() == Factory.getSession().getCurrentBoard().getId()) {
-				articlesByBoard.add(article);
+	public List<Article> getArticlesByBoardCode(String code) {
+		List<Article> articles = new ArrayList<>();
+		for (Article a : getArticles()) {
+			if (getBoardByCode(code).getId() == a.getBoardId()) {
+				articles.add(a);
+			}
+		}
+		return articles;
+	}
+
+	public void changeBoard(int boardId) {
+		if (boardId != Factory.getSession().getCurrentBoard().getId()) {
+			Factory.getSession().setCurrentBoard(Factory.getArticleService().getBoard(boardId));
+			System.out.println(getBoard(boardId).getName() + " 게시판으로 이동합니다.");
+		} else {
+			System.out.println("게시판 변경 실패 사유 : 현재 위치 게시판");
+		}
+	}
+
+	public void listBoard() {
+		System.out.println("게시판 리스트 출력");
+		System.out.println("번호 / 게시판 이름 / 게시판 코드 / 게시판 생성 날짜");
+		for (Board b : getBoards()) {
+			System.out.printf("%d / %s / %s / %s\n", b.getId(), b.getName(), b.getCode(), b.getRegDate());
+		}
+	}
+
+	public void deleteBoard(int boardId) {
+		for (Article a : getArticles()) {
+			if (a.getBoardId() == boardId) {
+				File file = new File(getDirPath() + "/article/" + a.getId() + ".json");
+				if (file.exists()) {
+					file.delete();
+					System.out.println(a.getId() + ".json 파일을 삭제하였습니다.");
+				}
+			}
+		}
+		File file = new File(getDirPath() + "/board/" + boardId + ".json");
+		if (file.exists()) {
+			String boardName = getBoard(boardId).getName();
+			file.delete();
+			System.out.println(boardName + " 게시판을 삭제하였습니다.");
+			System.out.println(boardId + ".json 파일을 삭제하였습니다.");
+		}
+	}
+//	public void deleteArticle(int num) {
+//		File file = new File(getDirPath() + "/article/" + num + ".json");
+//		if (file.exists()) {
+//			Article article = getArticleById(num);
+//			if (article.getMemberId() == Factory.getSession().getLoginedMember().getId()) {
+//				file.delete();
+//				System.out.println(num + "번 게시글을 삭제했습니다.");
+//			} else {
+//				System.out.println("게시글 삭제는 작성자 본인만 가능합니다.");
+//			}
+//		} else {
+//			System.out.println("파일이 존재하지 않습니다.");
+//		}
+//	}
+
+	public int isExistBoard(String deleteCode) {
+		for (Board b : getBoards()) {
+			if (b.getCode().equals(deleteCode)) {
+				return b.getId();
+			}
+		}
+		return 0;
+	}
+
+	public boolean findBoard(String boardName, String boardCode) {
+		for (Board b : getBoards()) {
+			if (b.getCode().equals(boardCode) || b.getName().equals(boardName)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void listArticlePage(int pageNum, String keyword) {
+		// 서치키워드를 포함하는 글들을 찾도록.
+		List<Article> articles = new ArrayList<>();
+		for (Article a : getArticles()) {
+			if (a.getBoardId() == Factory.getSession().getCurrentBoard().getId()) {
+				if (a.getTitle().contains(keyword) || a.getBody().contains(keyword)) {
+					articles.add(a);
+				}
 			}
 		}
 		// num을 기준으로 출력
-		if (articlesByBoard.size() != 0) {
-			System.out.println("번호 | 제목 | 작성 날짜 | 작성자");
-			for (int i = (num - 1) * 10; i < num * 10; i++) {
-				if (i >= articlesByBoard.size()) {
-					break;
+		if (articles.size() != 0) {
+			System.out.println(articles.size());
+			int page = (articles.size() - 1) / 10 + 1;
+			if (page < pageNum) {
+				System.out.println("존재하지 않는 페이지입니다.\n검색 결과 마지막 페이지는 " + page + " 페이지입니다.");
+			} else {
+				System.out.println("번호 | 제목 | 작성 날짜 | 작성자");
+				for (int i = articles.size() - 1 - (pageNum - 1) * 10; i >= articles.size()-10-(pageNum - 1) * 10; i--) {
+					if (i >= 0) {
+						Article a = articles.get(i);
+						System.out.printf("%d | %s | %s | %s\n", a.getId(), a.getTitle(), a.getRegDate(),
+								getMember(a.getMemberId()).getName());
+					} else {
+						break;
+					}
 				}
-				Article a = articlesByBoard.get(i);
-				System.out.printf("%d | %s | %s | %s\n", a.getId(), a.getTitle(), a.getRegDate(),
-						getMember(a.getMemberId()).getName());
+				System.out.printf("[%d / %d]\n", pageNum, articles.size() / 10 + 1);
 			}
+//			for(int i=(num-1)*10; i<num*10; i++) {
+//				if(i>=articles.size()) {
+//					break;
+//				}
+//				Article a = articles.get(i);
+//				System.out.printf("%d | %s | %s | %s\n", a.getId(), a.getTitle(), a.getRegDate(),
+//						getMember(a.getMemberId()).getName());
+//			}
 		} else {
 			System.out.println("게시물이 존재하지 않습니다.");
 		}
@@ -755,7 +1094,6 @@ class DB {
 				return board;
 			}
 		}
-
 		return null;
 	}
 
@@ -813,7 +1151,6 @@ class Table<T> {
 		Util.makeDir(tableDirPath);// 폴더생성
 	}
 
-	// public 변경 필요??
 	private String getTableName() {
 		return tableName;
 	}
