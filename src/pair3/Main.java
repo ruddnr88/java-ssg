@@ -1,3 +1,4 @@
+// ㅋㅋㅋ
 package pair3;
 
 import java.io.BufferedOutputStream;
@@ -306,19 +307,20 @@ class BoardController extends Controller {
 
 	void doAction(Request reqeust) {
 		if (reqeust.getActionName().equals("list")) {
-		//	actionBoardList(reqeust);
+			// actionBoardList(reqeust);
 		} else if (reqeust.getActionName().equals("change")) {
-			//actionBoardChange(reqeust);
+			// actionBoardChange(reqeust);
 		} else if (reqeust.getActionName().equals("delete")) {
-			//actionBoardDelete(reqeust);
+			// actionBoardDelete(reqeust);
 		}
 	}
 
-	//private void actionBoardList(Request reqeust) {
+	// private void actionBoardList(Request reqeust) {
 //		System.out.printf("%-3s|%-18s|%-8s|%-40s\n", "번호", "날짜", "코드", "이름");
 //
 //		for (int i = 0; i <= site.boardsLastIndex; i++) {
-	//		System.out.printf("%-4s|%-20s|%-10s|%-40s\n", site.boards[i].id + "번", site.boards[i].regDate,
+	// System.out.printf("%-4s|%-20s|%-10s|%-40s\n", site.boards[i].id + "번",
+	// site.boards[i].regDate,
 //					site.boards[i].code, site.boards[i].name);
 //		}
 //	}
