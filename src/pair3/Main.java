@@ -1,10 +1,10 @@
-// ㅋㅋㅋ
+//조장메세지
+
 package pair3;
 
 import java.io.BufferedOutputStream;
 
-// 화이팅!!! 보드게시판 만드는 중!!
-// 오케!!!!수정수정
+
 
 import java.io.File;
 import java.io.FileInputStream;
