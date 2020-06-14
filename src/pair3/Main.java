@@ -1,10 +1,9 @@
 //오류 : 리스트 페이징/ 삭제안됨/ 리스트 작성자에 로그인된사람 나옴/저장파일에 패키지이름 붙음
+//보드리스트,보드변경
 
 package pair3;
 
 import java.io.BufferedOutputStream;
-
-
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,6 +22,7 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 class Main {
 	public static void main(String[] args) {
@@ -307,23 +307,33 @@ class BoardController extends Controller {
 
 	void doAction(Request reqeust) {
 		if (reqeust.getActionName().equals("list")) {
-			// actionBoardList(reqeust);
+			actionBoardList(reqeust);
 		} else if (reqeust.getActionName().equals("change")) {
-			// actionBoardChange(reqeust);
+			actionBoardChange(reqeust);
 		} else if (reqeust.getActionName().equals("delete")) {
-			// actionBoardDelete(reqeust);
+//			 actionBoardDelete(reqeust);
 		}
 	}
 
-	// private void actionBoardList(Request reqeust) {
-//		System.out.printf("%-3s|%-18s|%-8s|%-40s\n", "번호", "날짜", "코드", "이름");
-//
-//		for (int i = 0; i <= site.boardsLastIndex; i++) {
-	// System.out.printf("%-4s|%-20s|%-10s|%-40s\n", site.boards[i].id + "번",
-	// site.boards[i].regDate,
-//					site.boards[i].code, site.boards[i].name);
-//		}
-//	}
+	private void actionBoardChange(Request reqeust) {
+		Board board = boardService.getBodardChange(reqeust.getArg1());
+
+		if (board == null) {
+			System.out.printf("존재하지 않는 게시판입니다.\n");
+			return;
+		}
+
+		System.out.printf("%s 게시판으로 변경되었습니다.\n", board.getName());
+	}
+
+	private void actionBoardList(Request reqeust) {
+		List<Board> boards = boardService.getBoards();
+		System.out.printf("%-3s|%-18s|%-8s|%-40s\n", "번호", "날짜", "코드", "이름");
+		for (int i = 0; i < boards.size(); i++) {
+			System.out.printf("%-4s|%-20s|%-10s|%-40s\n", boards.get(i).getId() + "번", boards.get(i).getRegDate(),
+					boards.get(i).getCode(), boards.get(i).getName());
+		}
+	}
 }
 
 class ArticleController extends Controller {
@@ -696,6 +706,14 @@ class BoardService {
 	BoardService() {
 		boardDao = Factory.getBoardDao();
 	}
+
+	public Board getBodardChange(String arg1) {
+		return boardDao.getBoardChange(arg1);
+	}
+
+	public List<Board> getBoards() {
+		return boardDao.getBoards();
+	}
 }
 
 class ArticleService {
@@ -799,6 +817,18 @@ class BoardDao {
 
 	BoardDao() {
 		db = Factory.getDB();
+	}
+
+	
+
+	public Board getBoardChange(String arg1) {
+		return db.getBoardByCode(arg1);
+	}
+
+
+
+	public List<Board> getBoards() {
+		return db.getBoards();
 	}
 }
 
