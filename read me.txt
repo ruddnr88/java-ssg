@@ -87,3 +87,11 @@ $ git remote add origin http://github.com/ruddnr88/java-ssg.git
 조장git hub 프로젝터로 꼭! 들어가야한다. 
 
 $ git pull origin master
+
+
+<< 자바(이클립스)에서 불러오기! >>
+
+File - import - General - Projects from Folder or Archive (선택)
+import source (디렉토리 선택 말고 창에서 선택후 직접 입력!)
+ ~~\sts-4.6.1.RELRESE.workspace\[java-ssg] 직접 입력
+폴더에서 선택되고 Finish
