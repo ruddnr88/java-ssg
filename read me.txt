@@ -1,26 +1,30 @@
 << 깃git 설명 요약본 >>
 깃 처음 시작할때 최초등록
 
-최초에 가져오기(꼭 워크스페이스 폴더에서 실행)
+최초에 가져오기(꼭 ~~\sts-4.4.0.RELEASE-workspace /워크스페이스 폴더에서 실행)
 git clone https://github.com/ruddnr88/java-ssg
 ( 깃허브에 등록되어있는 폴더를 가져올때 씀)
+- 이걸 실행하면 밑에 조원 카테고리에서 가져오는걸 생략할수있음. 
 
 사용자 등록
 
-git config --global user.name 
-git config --global user.email
+$ git config --global user.name 
+$ git config --global user.email
 
 두개를 우선 실행해서 등록된 유저/메일이 있는지 확인
 최초 1번만 하면된다. 등록방법
 
-git config --global user.name "ruddnr88"
-git config --global user.email "ruddnr88@naver.com"
+$ git config --global user.name "ruddnr88"
+$ git config --global user.email "ruddnr88@naver.com"
 github 에 등록된 유저이름과 이메일 작성(본인것!!)
 
 git push 할때 실행안될 시 초기화방법(관리자 도우미)
-git config --system --unset-all credential.helper
+$ git config --system --unset-all credential.helper
+$ clear (창 깨끗하게 컨트롤+L 해도 됨)
+$ ls (현 디렉토리의 리스트를 보여준다.)
 
-=== 조장만 ===
+
+=== 조장===
 공유하고싶은 자바폴더에서  git hash를 실행하고
 $ git init
 .git  폴더가 생성된다.(저장소)
@@ -67,4 +71,19 @@ origin  https://github.com/ruddnr88/java-ssg.git (push)
 $ git push origin master
 
 자바 파일 및 폴더 다운로드!! (중요)
+$ git pull origin master
+
+=== 조원 ===
+~~\sts-4.4.0.RELEASE-workspace 
+1. 작업저장해 놓은 폴더로 들어간다.
+2. java-ssg 폴더를 생성한다.
+
+폴더 안에서 git bash 실행한다.
+저장소를 만들어야 하니 
+$ git init 
+
+실행 폴더 명 뒤에 (master) 글이 생긴다.
+$ git remote add origin http://github.com/ruddnr88/java-ssg.git 
+조장git hub 프로젝터로 꼭! 들어가야한다. 
+
 $ git pull origin master
