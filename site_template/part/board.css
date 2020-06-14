@@ -1,0 +1,14 @@
+body, ul ,li {
+    margin:0;
+    padding:0
+ 
+}
+a {
+    text-decoration:none;
+    color:inherit;
+    display: block;
+}
+body > a {
+    font-weight:bold;
+    font-size:2rem;
+}

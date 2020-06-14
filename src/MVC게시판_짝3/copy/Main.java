@@ -1,11 +1,10 @@
-//오류 : 리스트 페이징/ 삭제안됨/ 리스트 작성자에 로그인된사람 나옴/저장파일에 패키지이름 붙음
+//할일,오류 : 리스트 페이징/ 삭제안됨/ 리스트 작성자에 로그인된사람 나옴/저장파일에 패키지이름 붙음
+//보드리스트,보드변경
+//완료 : article modify 뒤에 숫자없어도 오류안뜸/리스트 페이징/리스트 키워드검색/리스트 작성자에 로그인된사람 나옴/ 게시물 삭제 완료
 
-package pair3;
+package MVC게시판_짝3.copy;
 
 import java.io.BufferedOutputStream;
-
-
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -23,6 +22,7 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 class Main {
 	public static void main(String[] args) {
@@ -307,23 +307,35 @@ class BoardController extends Controller {
 
 	void doAction(Request reqeust) {
 		if (reqeust.getActionName().equals("list")) {
-			// actionBoardList(reqeust);
+			actionBoardList(reqeust);
 		} else if (reqeust.getActionName().equals("change")) {
-			// actionBoardChange(reqeust);
+			actionBoardChange(reqeust);
+		} else if (reqeust.getActionName().equals("create")) {
+//			actionBoardCreate(reqeust);
 		} else if (reqeust.getActionName().equals("delete")) {
-			// actionBoardDelete(reqeust);
+//			 actionBoardDelete(reqeust);
 		}
 	}
 
-	// private void actionBoardList(Request reqeust) {
-//		System.out.printf("%-3s|%-18s|%-8s|%-40s\n", "번호", "날짜", "코드", "이름");
-//
-//		for (int i = 0; i <= site.boardsLastIndex; i++) {
-	// System.out.printf("%-4s|%-20s|%-10s|%-40s\n", site.boards[i].id + "번",
-	// site.boards[i].regDate,
-//					site.boards[i].code, site.boards[i].name);
-//		}
-//	}
+	private void actionBoardChange(Request reqeust) {
+		Board board = boardService.getBodardChange(reqeust.getArg1());
+
+		if (board == null) {
+			System.out.printf("존재하지 않는 게시판입니다.\n");
+			return;
+		}
+
+		System.out.printf("%s 게시판으로 변경되었습니다.\n", board.getName());
+	}
+
+	private void actionBoardList(Request reqeust) {
+		List<Board> boards = boardService.getBoards();
+		System.out.printf("%-3s|%-18s|%-8s|%-40s\n", "번호", "날짜", "코드", "이름");
+		for (int i = 0; i < boards.size(); i++) {
+			System.out.printf("%-4s|%-20s|%-10s|%-40s\n", boards.get(i).getId() + "번", boards.get(i).getRegDate(),
+					boards.get(i).getCode(), boards.get(i).getName());
+		}
+	}
 }
 
 class ArticleController extends Controller {
@@ -362,12 +374,18 @@ class ArticleController extends Controller {
 			return;
 		}
 		System.out.println("== 게시물 삭제 ==");
-		int number = Integer.parseInt(reqeust.getArg1());
-		articleService.deleteArticle(number);
+		int number = -1;
+		try {
+			number = Integer.parseInt(reqeust.getArg1());
+		} catch (Exception e) {
+		} if (number != -1) {
+			articleService.deleteArticle(number);
+		} else {
+			System.out.println("게시물 삭제 실패 사유 : 번호 미입력");
+		}
 
 	}
 
-//아래 초록이 하고싶다.
 	private void actionModify(Request reqeust) {
 		if (Factory.getSession().getLoginedMember() == null) {
 			System.out.println("로그인 후 이용가능");
@@ -375,14 +393,13 @@ class ArticleController extends Controller {
 		}
 
 		System.out.println("== 게시물 수정 == ");
-		int number = Integer.parseInt(reqeust.getArg1());
-
-		int result = articleService.isExistArticle(number);
-
-		if (number == 0) {
-			System.out.println("게시글 번호를 입력해 주세요.");
-			return;
+		int number = -1;
+		try {
+			number = Integer.parseInt(reqeust.getArg1());
+		} catch (Exception e) {
 		}
+		
+		int result = articleService.isExistArticle(number);
 
 		if (result > 0) {
 			System.out.println("== 게시글 수정 ==");
@@ -403,14 +420,21 @@ class ArticleController extends Controller {
 
 	// 작성자에 현재로그인 한 사람 나옴 수정!!
 	private void actionList(Request reqeust) {
-		List<Article> articles = articleService.getArticles();
-		System.out.println("== 게시물 리스트 ==");
-		System.out.printf("%-3s|%-18s|%-7s|%-38s|%-7s\n", "번호", "날짜", "제목", "내용", "작성자");
-		for (int i = 0; i < articles.size(); i++) {
-			System.out.printf("%-5s|%-20s|%-9s|%-40s|%-7s\n", articles.get(i).getId(), articles.get(i).getRegDate(),
-					articles.get(i).getTitle(), articles.get(i).getBody(),
-					Factory.getSession().getLoginedMember().getName());
+		// page 숫자를 입력하지 않았을 경우, 1p를 보여줌.
+		int pageNum = 1;
+		try {
+			pageNum = Integer.parseInt(reqeust.getArg1());
+		} catch (Exception e) {
 		}
+		String searchKeyword = "";
+		try {
+			if (reqeust.getArg2().trim().length() > 0) {
+				searchKeyword = reqeust.getArg2();
+			}
+		} catch (Exception e) {
+		}
+		
+		articleService.listArticlePage(pageNum, searchKeyword);
 	}
 
 	private void actionWrite(Request reqeust) {
@@ -696,6 +720,14 @@ class BoardService {
 	BoardService() {
 		boardDao = Factory.getBoardDao();
 	}
+
+	public Board getBodardChange(String arg1) {
+		return boardDao.getBoardChange(arg1);
+	}
+
+	public List<Board> getBoards() {
+		return boardDao.getBoards();
+	}
 }
 
 class ArticleService {
@@ -703,6 +735,11 @@ class ArticleService {
 
 	ArticleService() {
 		articleDao = Factory.getArticleDao();
+	}
+
+	public void listArticlePage(int pageNum, String searchKeyword) {
+		articleDao.listArticlePage(pageNum, searchKeyword);
+		
 	}
 
 	public void detailArticle(int number) {
@@ -800,6 +837,18 @@ class BoardDao {
 	BoardDao() {
 		db = Factory.getDB();
 	}
+
+	
+
+	public Board getBoardChange(String arg1) {
+		return db.getBoardByCode(arg1);
+	}
+
+
+
+	public List<Board> getBoards() {
+		return db.getBoards();
+	}
 }
 
 class ArticleDao {
@@ -807,6 +856,10 @@ class ArticleDao {
 
 	ArticleDao() {
 		db = Factory.getDB();
+	}
+
+	public void listArticlePage(int pageNum, String searchKeyword) {
+		db.listArticlePage(pageNum, searchKeyword);
 	}
 
 	public void detailArticle(int number) {
@@ -895,6 +948,42 @@ class DB {
 		tables.put("member", new Table<Member>(Member.class, dbDirPath));
 	}
 
+	public void listArticlePage(int pageNum, String searchKeyword) {
+		// 서치키워드를 포함하는 글들을 찾도록.
+		List<Article> articles = new ArrayList<>();
+		for (Article a : getArticles()) {
+			if (a.getBoardId() == Factory.getSession().getCurrentBoard().getId()) {
+				if (a.getTitle().contains(searchKeyword) || a.getBody().contains(searchKeyword)) {
+					articles.add(a);
+				}
+			}
+		}
+		// num을 기준으로 출력
+		if (articles.size() != 0) {
+			System.out.println(articles.size());
+			//page에 넣는값 다시보기!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			int page = (articles.size() - 1) / 10 + 1;
+			if (page < pageNum) {
+				System.out.println("존재하지 않는 페이지입니다.");
+			} else {
+				System.out.println("== 게시물 리스트 ==");
+				System.out.printf("%-3s|%-18s|%-7s|%-7s\n", "번호", "날짜", "제목", "작성자");
+				for (int i = articles.size() - 1 - (pageNum - 1) * 10; i >= articles.size()-10-(pageNum - 1) * 10; i--) {
+					if (i >= 0) {
+						Article a = articles.get(i);
+						System.out.printf("%-5s|%-20s|%-9s|%-7s\n", a.getId(), a.getRegDate(), a.getTitle(),
+							getMember(a.getMemberId()).getName());
+					} else {
+						break;
+					}
+				}
+				System.out.printf("[%d / %d]\n", pageNum, articles.size() / 10 + 1);
+			}
+		} else {
+			System.out.println("게시물이 존재하지 않습니다.");
+		}
+	}
+
 	public void detailArticle(int number) {
 		Article a = getArticleById(number);
 		if (a != null) {
@@ -925,7 +1014,7 @@ class DB {
 	}
 
 	public void deleteArticle(int number) {
-		File file = new File(getDirPath() + "/copy.article/" + number + ".json");
+		File file = new File(getDirPath() + "/mVC게시판_짝3.copy.Article/" + number + ".json");
 		if (file.exists()) {
 			Article article = getArticleById(number);
 			if (article.getMemberId() == Factory.getSession().getLoginedMember().getId()) {
@@ -934,6 +1023,8 @@ class DB {
 			} else {
 				System.out.println("게시글 삭제는 작성자 본인만 가능합니다.");
 			}
+		} else {
+			System.out.println("파일이 존재하지 않습니다.");
 		}
 	}
 
