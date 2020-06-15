@@ -113,3 +113,19 @@ table td {
     border-right: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
 }
+
+/**/
+.loginpage { 
+    margin-top:10%;
+    
+
+}
+.logininput {
+    display: inline-block;
+    font-size:20px;
+}
+
+.loginpage input {
+    width:200px;
+    height:20px;
+}
