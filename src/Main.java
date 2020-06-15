@@ -2,8 +2,6 @@
 //보드리스트,보드변경
 //완료 : article modify 뒤에 숫자없어도 오류안뜸/리스트 페이징/리스트 키워드검색/리스트 작성자에 로그인된사람 나옴/ 게시물 삭제 완료
 
-package pair3;
-
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -453,6 +451,7 @@ class BuildController extends Controller {
 
 	private void actionSite(Request reqeust) {
 		buildService.buildSite();
+		System.out.println("사이트가 생성되었습니다.");
 	}
 }
 
@@ -656,7 +655,7 @@ class BuildService {
 				html += "<td>" + article.getId() + "</td>";
 				html += "<td>" + article.getRegDate() + "</td>";
 				html += "<td><a href=\"" + article.getId() + ".html\">" + article.getTitle() + "</a></td>";
-				html += "<td>" + article.getMemberId()+ "</td>";
+				html += "<td>" + article.getMemberId() + "</td>";
 				html += "</tr>";
 			}
 			// list의 ${TR}에 html 들어감
@@ -675,6 +674,7 @@ class BuildService {
 
 			html += "<head>";
 			html += "<meta charset=\"utf-8\">";
+			html += "<link rel=\"stylesheet\" type=\"text/css\" href=\"C/:work/sts-4.4.0.RELEASE-workspace/java-ssg/css/aritcle.css\">";
 			html += "</head>";
 
 			html += "<body>";
@@ -966,7 +966,7 @@ class DB {
 	}
 
 	public void deleteArticle(int number) {
-		File file = new File(getDirPath() + "/Article/" + number + ".json");
+		File file = new File(getDirPath() + "/article/" + number + ".json");
 		if (file.exists()) {
 			Article article = getArticleById(number);
 			if (article.getMemberId() == Factory.getSession().getLoginedMember().getId()) {
