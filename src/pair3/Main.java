@@ -1,9 +1,8 @@
 //할일,오류 : 리스트 페이징/ 삭제안됨/ 리스트 작성자에 로그인된사람 나옴/저장파일에 패키지이름 붙음
-//페이지
 //보드리스트,보드변경
 //완료 : article modify 뒤에 숫자없어도 오류안뜸/리스트 페이징/리스트 키워드검색/리스트 작성자에 로그인된사람 나옴/ 게시물 삭제 완료
 
-package MVC게시판_짝3.copy;
+package pair3;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -23,7 +22,6 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 
 class Main {
 	public static void main(String[] args) {
@@ -67,8 +65,6 @@ class Factory {
 	private static Session session;
 	private static DB db;
 	private static BuildService buildService;
-	private static BoardService boardService;
-	private static BoardDao boardDao;
 	private static ArticleService articleService;
 	private static ArticleDao articleDao;
 	private static MemberService memberService;
@@ -97,23 +93,6 @@ class Factory {
 		}
 
 		return db;
-	}
-
-	public static BoardService getBoardService() {
-		if (boardService == null) {
-			boardService = new BoardService();
-		}
-
-		return boardService;
-
-	}
-
-	public static BoardDao getBoardDao() {
-		if (boardDao == null) {
-			boardDao = new BoardDao();
-		}
-
-		return boardDao;
 	}
 
 	public static ArticleService getArticleService() {
@@ -167,7 +146,6 @@ class App {
 		controllers.put("build", new BuildController());
 		controllers.put("article", new ArticleController());
 		controllers.put("member", new MemberController());
-		controllers.put("board", new BoardController());
 	}
 
 	public App() {
@@ -299,46 +277,6 @@ abstract class Controller {
 	abstract void doAction(Request reqeust);
 }
 
-class BoardController extends Controller {
-	private BoardService boardService;
-
-	BoardController() {
-		boardService = Factory.getBoardService();
-	}
-
-	void doAction(Request reqeust) {
-		if (reqeust.getActionName().equals("list")) {
-			actionBoardList(reqeust);
-		} else if (reqeust.getActionName().equals("change")) {
-			actionBoardChange(reqeust);
-		} else if (reqeust.getActionName().equals("create")) {
-//			actionBoardCreate(reqeust);
-		} else if (reqeust.getActionName().equals("delete")) {
-//			 actionBoardDelete(reqeust);
-		}
-	}
-
-	private void actionBoardChange(Request reqeust) {
-		Board board = boardService.getBodardChange(reqeust.getArg1());
-
-		if (board == null) {
-			System.out.printf("존재하지 않는 게시판입니다.\n");
-			return;
-		}
-
-		System.out.printf("%s 게시판으로 변경되었습니다.\n", board.getName());
-	}
-
-	private void actionBoardList(Request reqeust) {
-		List<Board> boards = boardService.getBoards();
-		System.out.printf("%-3s|%-18s|%-8s|%-40s\n", "번호", "날짜", "코드", "이름");
-		for (int i = 0; i < boards.size(); i++) {
-			System.out.printf("%-4s|%-20s|%-10s|%-40s\n", boards.get(i).getId() + "번", boards.get(i).getRegDate(),
-					boards.get(i).getCode(), boards.get(i).getName());
-		}
-	}
-}
-
 class ArticleController extends Controller {
 	private ArticleService articleService;
 
@@ -357,6 +295,46 @@ class ArticleController extends Controller {
 			actionDelete(reqeust);
 		} else if (reqeust.getActionName().equals("detail")) {
 			actionDetail(reqeust);
+		}
+		if (reqeust.getActionName().equals("listBoard")) {
+			actionListBoard(reqeust);
+		} else if (reqeust.getActionName().equals("changeBoard")) {
+			actionChangeBoard(reqeust);
+		} else if (reqeust.getActionName().equals("createBoard")) {
+			actionCreateBoard(reqeust);
+		} else if (reqeust.getActionName().equals("deleteBoard")) {
+			actionDeleteBoard(reqeust);
+		}
+	}
+
+	private void actionDeleteBoard(Request reqeust) {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void actionCreateBoard(Request reqeust) {
+		// TODO Auto-generated method stub
+
+	}
+
+	private void actionChangeBoard(Request reqeust) {
+		Board board = articleService.getBodardChange(reqeust.getArg1());
+
+		if (board == null) {
+			System.out.printf("존재하지 않는 게시판입니다.\n");
+			return;
+		}
+
+		System.out.printf("%s 게시판으로 변경되었습니다.\n", board.getName());
+
+	}
+
+	private void actionListBoard(Request reqeust) {
+		List<Board> boards = articleService.getBoards();
+		System.out.printf("%-3s|%-18s|%-8s|%-40s\n", "번호", "날짜", "코드", "이름");
+		for (int i = 0; i < boards.size(); i++) {
+			System.out.printf("%-4s|%-20s|%-10s|%-40s\n", boards.get(i).getId() + "번", boards.get(i).getRegDate(),
+					boards.get(i).getCode(), boards.get(i).getName());
 		}
 	}
 
@@ -379,7 +357,8 @@ class ArticleController extends Controller {
 		try {
 			number = Integer.parseInt(reqeust.getArg1());
 		} catch (Exception e) {
-		} if (number != -1) {
+		}
+		if (number != -1) {
 			articleService.deleteArticle(number);
 		} else {
 			System.out.println("게시물 삭제 실패 사유 : 번호 미입력");
@@ -399,7 +378,7 @@ class ArticleController extends Controller {
 			number = Integer.parseInt(reqeust.getArg1());
 		} catch (Exception e) {
 		}
-		
+
 		int result = articleService.isExistArticle(number);
 
 		if (result > 0) {
@@ -434,7 +413,7 @@ class ArticleController extends Controller {
 			}
 		} catch (Exception e) {
 		}
-		
+
 		articleService.listArticlePage(pageNum, searchKeyword);
 	}
 
@@ -715,22 +694,6 @@ class BuildService {
 
 }
 
-class BoardService {
-	private BoardDao boardDao;
-
-	BoardService() {
-		boardDao = Factory.getBoardDao();
-	}
-
-	public Board getBodardChange(String arg1) {
-		return boardDao.getBoardChange(arg1);
-	}
-
-	public List<Board> getBoards() {
-		return boardDao.getBoards();
-	}
-}
-
 class ArticleService {
 	private ArticleDao articleDao;
 
@@ -738,9 +701,13 @@ class ArticleService {
 		articleDao = Factory.getArticleDao();
 	}
 
+	public Board getBodardChange(String arg1) {
+		return articleDao.getBoardChange(arg1);
+	}
+
 	public void listArticlePage(int pageNum, String searchKeyword) {
 		articleDao.listArticlePage(pageNum, searchKeyword);
-		
+
 	}
 
 	public void detailArticle(int number) {
@@ -831,32 +798,15 @@ class MemberService {
 	}
 }
 
-// Dao
-class BoardDao {
-	DB db;
-
-	BoardDao() {
-		db = Factory.getDB();
-	}
-
-	
-
-	public Board getBoardChange(String arg1) {
-		return db.getBoardByCode(arg1);
-	}
-
-
-
-	public List<Board> getBoards() {
-		return db.getBoards();
-	}
-}
-
 class ArticleDao {
 	DB db;
 
 	ArticleDao() {
 		db = Factory.getDB();
+	}
+
+	public Board getBoardChange(String arg1) {
+		return db.getBoardByCode(arg1);
 	}
 
 	public void listArticlePage(int pageNum, String searchKeyword) {
@@ -961,19 +911,20 @@ class DB {
 		}
 		// num을 기준으로 출력
 		if (articles.size() != 0) {
-			System.out.println(articles.size());
-			//page에 넣는값 다시보기!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			// System.out.println(articles.size());
+			// page에 넣는값 다시보기!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			int page = (articles.size() - 1) / 10 + 1;
 			if (page < pageNum) {
 				System.out.println("존재하지 않는 페이지입니다.");
 			} else {
 				System.out.println("== 게시물 리스트 ==");
 				System.out.printf("%-3s|%-18s|%-7s|%-7s\n", "번호", "날짜", "제목", "작성자");
-				for (int i = articles.size() - 1 - (pageNum - 1) * 10; i >= articles.size()-10-(pageNum - 1) * 10; i--) {
+				for (int i = articles.size() - 1 - (pageNum - 1) * 10; i >= articles.size() - 10
+						- (pageNum - 1) * 10; i--) {
 					if (i >= 0) {
 						Article a = articles.get(i);
 						System.out.printf("%-5s|%-20s|%-9s|%-7s\n", a.getId(), a.getRegDate(), a.getTitle(),
-							getMember(a.getMemberId()).getName());
+								getMember(a.getMemberId()).getName());
 					} else {
 						break;
 					}
@@ -1015,7 +966,7 @@ class DB {
 	}
 
 	public void deleteArticle(int number) {
-		File file = new File(getDirPath() + "/mVC게시판_짝3.copy.Article/" + number + ".json");
+		File file = new File(getDirPath() + "/Article/" + number + ".json");
 		if (file.exists()) {
 			Article article = getArticleById(number);
 			if (article.getMemberId() == Factory.getSession().getLoginedMember().getId()) {
